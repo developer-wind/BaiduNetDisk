@@ -60,7 +60,6 @@ func CreatePath(p string) (respSct respCreate, err error) {
 		exists: false,
 		dirEmpty: true,
 	}
-
 	url := fmt.Sprintf("https://pan.baidu.com/api/create?a=commit&channel=chunlei&web=1&clienttype=0&bdstoken=%s", pUser.token)
 	b := strings.NewReader(fmt.Sprint("isdir=1&path=", p))
 	req, err := http.NewRequest("POST", url, b)

@@ -11,7 +11,7 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(BaiduNetDisk.CreatePath("/game/101xx"))
+	fmt.Println(BaiduNetDisk.CreatePath("/game/101xx#?.*"))
 }
 
 
