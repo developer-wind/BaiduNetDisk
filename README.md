@@ -1,6 +1,5 @@
-# BaiduNetDisk
-
-百度网盘API
+# BaiduNetDisk 百度网盘api
+百度网盘api, go客户端，可支持增删改，持续更新中
 
 # 操作说明
 - 1.登录https://pan.baidu.com
