@@ -46,6 +46,7 @@ func (u *PanUser) verifyCookie() error {
 	if err != nil {
 		panic(err)
 	}
+	defer resp.Body.Close()
 	if resp.Header.Get("Location") == "https://pan.baidu.com/login?redirecturl=http%3A%2F%2Fpan.baidu.com%2Fdisk%2Fhome" {
 		return errors.New("BaiduNetDisk cookie is expired")
 	}

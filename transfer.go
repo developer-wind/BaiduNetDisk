@@ -96,6 +96,7 @@ func GetFileInfo(url string) (f *File, err error) {
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 
 	i,j := 500, 500
 	c := make([]byte, 0)
@@ -141,6 +142,7 @@ func (f *File) Verify(url, pass string) (err error) {
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 	c, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return
@@ -175,6 +177,7 @@ func (f *File) Verify(url, pass string) (err error) {
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 
 	i,j := 500, 500
 	c = make([]byte, 0)
@@ -250,6 +253,7 @@ func Transfer(url, path, pass string) error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	c, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err

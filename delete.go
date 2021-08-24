@@ -26,6 +26,7 @@ func Delete(fNameList []string) (err error) {
 	if err != nil {
 		return
 	}
+	defer resp.Body.Close()
 	c, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return
