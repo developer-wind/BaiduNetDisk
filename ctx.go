@@ -19,4 +19,9 @@ func initRegexp() {
 	if err != nil {
 		panic(err)
 	}
+
+	verifyCsRegexp, err = regexp.Compile("(BDCLND=[^;]+);")
+	if err != nil {
+		panic(err)
+	}
 }

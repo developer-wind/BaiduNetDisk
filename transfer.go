@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -219,7 +220,7 @@ func Transfer(url, path, pass string) error {
 		return err
 	}
 	if respCreate.exists && !respCreate.dirEmpty {
-		return errors.New(fmt.Sprintf("%s is exists", path))
+		return os.ErrExist
 	}
 
 	err = f.Verify(url, pass)
@@ -228,7 +229,7 @@ func Transfer(url, path, pass string) error {
 	}
 	//需要提取码的文件，需验证过后FileList才是真实数据
 	if len(f.FileList) == 0 {
-		return errors.New(fmt.Sprintf("%s 转储文件失败，分享的文件已被删除", url))
+		return errors.New("分享的文件已被删除")
 	}
 
 	fSidList := make([]int64, 0)
@@ -266,7 +267,7 @@ func Transfer(url, path, pass string) error {
 		return err
 	}
 	if respObj.Errno != 0 {
-		err = errors.New(fmt.Sprintf("%s 转储文件失败，错误码:%d %s", url, respObj.Errno, path))
+		err = errors.New(fmt.Sprintf("错误码:%d %s",respObj.Errno, path))
 		return err
 	}
 	return nil
