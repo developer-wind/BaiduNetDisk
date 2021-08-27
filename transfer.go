@@ -219,7 +219,7 @@ func Transfer(url, path, pass string) error {
 	if err != nil {
 		return err
 	}
-	if respCreate.exists && !respCreate.dirEmpty {
+	if respCreate.Exists && !respCreate.DirEmpty {
 		return os.ErrExist
 	}
 

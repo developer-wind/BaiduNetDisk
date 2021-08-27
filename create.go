@@ -17,8 +17,8 @@ type mu struct {
 }
 
 type respCreate struct {
-	exists bool
-	dirEmpty bool
+	Exists bool
+	DirEmpty bool
 }
 
 var (
@@ -51,14 +51,14 @@ func CreatePath(p string) (respSct respCreate, err error) {
 	info, exists := fl[fileName]
 	if exists {
 		respSct = respCreate{
-			exists: true,
-			dirEmpty: info.DirEmpty == 1,
+			Exists: true,
+			DirEmpty: info.DirEmpty == 1,
 		}
 		return
 	}
 	respSct = respCreate{
-		exists: false,
-		dirEmpty: true,
+		Exists: false,
+		DirEmpty: true,
 	}
 	url := fmt.Sprintf("https://pan.baidu.com/api/create?a=commit&channel=chunlei&web=1&clienttype=0&bdstoken=%s", pUser.token)
 	b := strings.NewReader(fmt.Sprint("isdir=1&path=", p))
