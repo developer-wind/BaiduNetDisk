@@ -229,7 +229,7 @@ func Transfer(url, path, pass string) error {
 	}
 	//需要提取码的文件，需验证过后FileList才是真实数据
 	if len(f.FileList) == 0 {
-		return errors.New("分享的文件已被删除")
+		return ErrDel
 	}
 
 	fSidList := make([]int64, 0)
