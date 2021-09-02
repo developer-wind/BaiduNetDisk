@@ -110,6 +110,10 @@ func GetFileInfo(url string) (f *File, err error) {
 		c = append(c, x[:j]...)
 	}
 
+	if fileDelRegexp.Match(c) {
+		err = ErrDel
+		return
+	}
 	fileMatches := fileRegexp.FindSubmatch(c)
 	if fileMatches == nil {
 		err = errors.New(fmt.Sprintln(url, ": file_struct is not found"))
@@ -215,6 +219,10 @@ func Transfer(url, path, pass string) error {
 		return err
 	}
 
+	if pass == "" && len(f.FileList) == 0 {
+		return errors.New("该文件需要提取码，请指定提取码")
+	}
+
 	respCreate, err := CreatePath(path)
 	if err != nil {
 		return err
@@ -226,10 +234,6 @@ func Transfer(url, path, pass string) error {
 	err = f.Verify(url, pass)
 	if err != nil {
 		return err
-	}
-	//需要提取码的文件，需验证过后FileList才是真实数据
-	if len(f.FileList) == 0 {
-		return ErrDel
 	}
 
 	fSidList := make([]int64, 0)

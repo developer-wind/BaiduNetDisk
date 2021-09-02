@@ -7,6 +7,7 @@ import (
 
 var (
 	fileRegexp *regexp.Regexp
+	fileDelRegexp *regexp.Regexp
 	verifyCsRegexp *regexp.Regexp
 	ErrDel = errors.New("分享的文件已被删除")
 )
@@ -22,7 +23,12 @@ func initRegexp() {
 		panic(err)
 	}
 
-	verifyCsRegexp, err = regexp.Compile("(BDCLND=[^;]+);")
+	verifyCsRegexp, err = regexp.Compile(`(BDCLND=[^;]+);`)
+	if err != nil {
+		panic(err)
+	}
+
+	fileDelRegexp, err = regexp.Compile(`分享的文件已经被删除`)
 	if err != nil {
 		panic(err)
 	}
