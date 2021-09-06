@@ -28,7 +28,7 @@ func initRegexp() {
 		panic(err)
 	}
 
-	fileDelRegexp, err = regexp.Compile(`分享的文件已经被删除`)
+	fileDelRegexp, err = regexp.Compile(`链接不存在`)
 	if err != nil {
 		panic(err)
 	}

@@ -64,7 +64,7 @@ func (u *PanUser) verifyCookie() error {
 
 	fileMatches := fileRegexp.FindSubmatch(c)
 	if fileMatches == nil {
-		return errors.New("file_struct is not found")
+		return errors.New("please set the correct cookie, file_struct is not found")
 	}
 	respStruct := new(struct{
 		Token string `json:"bdstoken"`
