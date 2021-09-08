@@ -13,6 +13,7 @@ func main() {
 
 	for _, u := range us {
 		fmt.Print(u.Username(), " ")
+		fmt.Print(u.Quota(), " ")
 		fmt.Println(u.GetFileList("/"))
 	}
 }

@@ -3,6 +3,7 @@ package BaiduNetDisk
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +18,8 @@ type PanUser struct {
 	appid  string
 	uk string
 
+	quota Quota
+
 	create mu
 	list FileList
 }
@@ -24,6 +27,45 @@ type PanUser struct {
 func (u *PanUser) writeCookie(cookie string) error {
 	u.cookie = cookie
 	return u.verifyCookie()
+}
+
+func (u *PanUser) loadQuota() (err error) {
+	url := fmt.Sprintf("https://pan.baidu.com/api/quota?checkexpire=1&checkfree=1&channel=chunlei&web=1&app_id=&bdstoken=%s&clienttype=0", u.token)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Referer", fmt.Sprintf("https://pan.baidu.com/disk/home?"))
+	req.Header.Set("Cookie", u.cookie)
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	c, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+	ci := new(struct{
+		Errno int `json:"errno"`
+		Total int `json:"total"`
+		Free int `json:"free"`
+		Used int `json:"used"`
+	})
+	err = json.Unmarshal(c, ci)
+	if err != nil {
+		return
+	}
+	if ci.Errno != 0 {
+		err = errors.New(fmt.Sprintf("获取可用空间失败 ，错误码:%d", ci.Errno))
+		return
+	}
+	u.quota = Quota{
+		Total: ci.Total,
+		Free: ci.Free,
+		Used: ci.Used,
+	}
+	return
 }
 
 func ImportCookie(p string) (pu *PanUser, err error) {
@@ -38,6 +80,13 @@ func ImportCookie(p string) (pu *PanUser, err error) {
 
 	pu = new(PanUser)
 	err = pu.writeCookie(string(c))
+	if err != nil {
+		return
+	}
+	err = pu.loadQuota()
+	if err != nil {
+		return
+	}
 	pu.initCreate()
 	pu.initList()
 	return
@@ -113,4 +162,13 @@ func (u *PanUser) verifyCookie() error {
 
 func (u *PanUser) Username() string {
 	return u.username
+}
+
+type Quota struct{
+	Total int
+	Free int
+	Used int
+}
+func (u *PanUser) Quota() Quota {
+	return u.quota
 }
