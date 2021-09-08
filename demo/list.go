@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	pu, err := BaiduNetDisk.ImportCookie("/Users/tt/Downloads/game_down/pan.cookies")
+	pu, err := BaiduNetDisk.ImportCookie("/Users/tt/Downloads/pan_cookies/qq2215219591")
 	if err != nil {
 		panic(err)
 	}
