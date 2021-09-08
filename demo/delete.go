@@ -6,12 +6,12 @@ import (
 )
 
 func main() {
-	err := BaiduNetDisk.ImportCookie("/Users/tt/Downloads/game_down/pan.cookies")
+	pu, err := BaiduNetDisk.ImportCookie("/Users/tt/Downloads/game_down/pan.cookies")
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(BaiduNetDisk.Delete([]string{
+	fmt.Println(pu.Delete([]string{
 		"/game/101xx",
 		"/game/xxx",
 	}))

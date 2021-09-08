@@ -14,25 +14,31 @@ type PanUser struct {
 	token  string
 	appid  string
 	uk string
+
+	create mu
+	list FileList
 }
 
-var pUser = new(PanUser)
-
-func WriteCookie(cookie string) error {
-	pUser.cookie = cookie
-	return pUser.verifyCookie()
+func (u *PanUser) writeCookie(cookie string) error {
+	u.cookie = cookie
+	return u.verifyCookie()
 }
 
-func ImportCookie(p string) error {
-	f, e := os.Open(p)
-	if e != nil {
-		return e
+func ImportCookie(p string) (pu *PanUser, err error) {
+	f, err := os.Open(p)
+	if err != nil {
+		return
 	}
-	c, er := ioutil.ReadAll(f)
-	if er != nil {
-		return er
+	c, err := ioutil.ReadAll(f)
+	if err != nil {
+		return
 	}
-	return WriteCookie(string(c))
+
+	pu = new(PanUser)
+	err = pu.writeCookie(string(c))
+	pu.initCreate()
+	pu.initList()
+	return
 }
 
 func (u *PanUser) verifyCookie() error {

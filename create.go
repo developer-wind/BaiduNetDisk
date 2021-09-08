@@ -12,7 +12,8 @@ import (
 )
 
 type mu struct {
-	mu sync.Mutex
+	sync.Once
+	sync.Mutex
 	list map[string]*sync.Mutex
 }
 
@@ -21,28 +22,26 @@ type respCreate struct {
 	DirEmpty bool
 }
 
-var (
-	m = new(mu)
-)
-
-func init() {
-	m.list = make(map[string]*sync.Mutex)
+func (u *PanUser) initCreate() {
+	u.create.Do(func() {
+		u.create.list = make(map[string]*sync.Mutex)
+	})
 }
 
-func CreatePath(p string) (respSct respCreate, err error) {
-	m.mu.Lock()
-	subMu, exists := m.list[p]
+func (u *PanUser) CreatePath(p string) (respSct respCreate, err error) {
+	u.create.Lock()
+	subMu, exists := u.create.list[p]
 	if !exists {
 		subMu = &sync.Mutex{}
-		m.list[p] = subMu
+		u.create.list[p] = subMu
 	}
 	subMu.Lock()
 	defer subMu.Unlock()
-	m.mu.Unlock()
+	u.create.Unlock()
 
 	parentPath := path.Dir(p)
 	fileName := path.Base(p)
-	fl, err := GetFileList(parentPath)
+	fl, err := u.GetFileList(parentPath)
 	if err != nil {
 		return
 	}
@@ -60,7 +59,7 @@ func CreatePath(p string) (respSct respCreate, err error) {
 		Exists: false,
 		DirEmpty: true,
 	}
-	url := fmt.Sprintf("https://pan.baidu.com/api/create?a=commit&channel=chunlei&web=1&clienttype=0&bdstoken=%s", pUser.token)
+	url := fmt.Sprintf("https://pan.baidu.com/api/create?a=commit&channel=chunlei&web=1&clienttype=0&bdstoken=%s", u.token)
 	b := strings.NewReader(fmt.Sprint("isdir=1&path=", p))
 	req, err := http.NewRequest("POST", url, b)
 	if err != nil {
@@ -68,7 +67,7 @@ func CreatePath(p string) (respSct respCreate, err error) {
 	}
 	req.Header.Set("Referer", fmt.Sprintf("https://pan.baidu.com/disk/home#/all?vmode=list&path=%s", parentPath))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Cookie", pUser.cookie)
+	req.Header.Set("Cookie", u.cookie)
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		return

@@ -10,9 +10,10 @@ import (
 )
 
 type FileList struct {
-	mu sync.Mutex
+	sync.Once
+	sync.Mutex
 	List map[string]*struct{
-		mu sync.Mutex
+		sync.Mutex
 		List map[string]FileInfo
 	}
 }
@@ -51,37 +52,36 @@ type FileInfo struct {
 
 const ParentPath = "/"
 
-var (
-	FList = new(FileList)
-)
-func init() {
-	FList.List = make(map[string]*struct{
-		mu sync.Mutex
-		List map[string]FileInfo
+func (u *PanUser) initList() {
+	u.list.Do(func() {
+		u.list.List = make(map[string]*struct{
+			sync.Mutex
+			List map[string]FileInfo
+		})
 	})
 }
 
-func GetFileList(path string) (map[string]FileInfo, error) {
+func (u *PanUser) GetFileList(path string) (map[string]FileInfo, error) {
 	if path == "" {
 		path = ParentPath
 	}
 
 	//构建子结构，降低锁竞争
-	FList.mu.Lock()
-	fl, exists := FList.List[path]
+	u.list.Lock()
+	fl, exists := u.list.List[path]
 	if !exists {
 		fl = new(struct{
-			mu sync.Mutex
+			sync.Mutex
 			List map[string]FileInfo
 		})
 		fl.List = make(map[string]FileInfo)
-		FList.List[path] = fl
+		u.list.List[path] = fl
 	}
-	FList.mu.Unlock()
+	u.list.Unlock()
 
 	//子结构加锁
-	fl.mu.Lock()
-	defer fl.mu.Unlock()
+	fl.Lock()
+	defer fl.Unlock()
 	if len(fl.List) > 0 {
 		return fl.List, nil
 	}
@@ -96,7 +96,7 @@ func GetFileList(path string) (map[string]FileInfo, error) {
 			return
 		}
 		req.Header.Set("Referer", fmt.Sprintf("https://pan.baidu.com/disk/home?#/all?vmode=list&path=%s", path))
-		req.Header.Set("Cookie", pUser.cookie)
+		req.Header.Set("Cookie", u.cookie)
 		resp, err := (&http.Client{}).Do(req)
 		if err != nil {
 			return

@@ -12,6 +12,7 @@ import (
 )
 
 type File struct {
+	u *PanUser
 	sKey string
 	Csrf string `json:"csrf"`
 	Uk string `json:"uk"`
@@ -87,12 +88,12 @@ type ChildFile struct {
 	Wpfile string `json:"wpfile"`
 }
 
-func GetFileInfo(url string) (f *File, err error) {
+func (u *PanUser) GetFileInfo(url string) (f *File, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return
 	}
-	req.Header.Set("Cookie", pUser.cookie)
+	req.Header.Set("Cookie", u.cookie)
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		return
@@ -121,6 +122,7 @@ func GetFileInfo(url string) (f *File, err error) {
 	}
 
 	f = new(File)
+	f.u = u
 	err = json.Unmarshal(fileMatches[1], f)
 	if err != nil {
 		return
@@ -142,7 +144,7 @@ func (f *File) Verify(url, pass string) (err error) {
 	}
 	req.Header.Set("Referer", fmt.Sprintf("https://pan.baidu.com/share/init?surl=%s", sUrl))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Cookie", pUser.cookie)
+	req.Header.Set("Cookie", f.u.cookie)
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		return
@@ -176,7 +178,7 @@ func (f *File) Verify(url, pass string) (err error) {
 	if err != nil {
 		return
 	}
-	cs := fmt.Sprintf("%s;%s", tokenMatches[1], pUser.cookie)
+	cs := fmt.Sprintf("%s;%s", tokenMatches[1], f.u.cookie)
 	req.Header.Set("Cookie", cs)
 	resp, err = (&http.Client{}).Do(req)
 	if err != nil {
@@ -212,10 +214,10 @@ func (f *File) Verify(url, pass string) (err error) {
 }
 
 var InsufficientSpaceError = errors.New("剩余空间不足,无法转存")
-func Transfer(url, path, pass string) error {
+func (u *PanUser) Transfer(url, path, pass string) error {
 	//获取文件相关参数
 	//需要提取码的文件，部分参数获取不到，需在验证环节获取
-	f, err := GetFileInfo(url)
+	f, err := u.GetFileInfo(url)
 	if err != nil {
 		return err
 	}
@@ -224,7 +226,7 @@ func Transfer(url, path, pass string) error {
 		return errors.New("该文件需要提取码，请指定提取码")
 	}
 
-	respCreate, err := CreatePath(path)
+	respCreate, err := u.CreatePath(path)
 	if err != nil {
 		return err
 	}
@@ -247,14 +249,14 @@ func Transfer(url, path, pass string) error {
 	}
 
 	b := strings.NewReader(fmt.Sprint("fsidlist=", string(fSidListBts), "&path=", path))
-	url2 := fmt.Sprintf("https://pan.baidu.com/share/transfer?shareid=%d&from=%s&ondup=newcopy&async=1&channel=chunlei&web=1&app_id=%s&bdstoken=%s&clienttype=0&sekey=%s", f.Shareid, f.ShareUk, pUser.appid, pUser.token, f.sKey)
+	url2 := fmt.Sprintf("https://pan.baidu.com/share/transfer?shareid=%d&from=%s&ondup=newcopy&async=1&channel=chunlei&web=1&app_id=%s&bdstoken=%s&clienttype=0&sekey=%s", f.Shareid, f.ShareUk, u.appid, u.token, f.sKey)
 	req, err := http.NewRequest("POST", url2, b)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Referer", url)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Cookie", pUser.cookie)
+	req.Header.Set("Cookie", u.cookie)
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		return err

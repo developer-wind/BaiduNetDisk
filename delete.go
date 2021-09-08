@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-func Delete(fNameList []string) (err error) {
-	url := fmt.Sprintf("https://pan.baidu.com/api/filemanager?opera=delete&async=2&onnest=fail&channel=chunlei&web=1&app_id=&bdstoken=%s&clienttype=0", pUser.token)
+func (u *PanUser) Delete(fNameList []string) (err error) {
+	url := fmt.Sprintf("https://pan.baidu.com/api/filemanager?opera=delete&async=2&onnest=fail&channel=chunlei&web=1&app_id=&bdstoken=%s&clienttype=0", u.token)
 	fNameListStr, err := json.Marshal(fNameList)
 	if err != nil {
 		return
@@ -21,7 +21,7 @@ func Delete(fNameList []string) (err error) {
 		return
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Set("Cookie", pUser.cookie)
+	req.Header.Set("Cookie", u.cookie)
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		return
