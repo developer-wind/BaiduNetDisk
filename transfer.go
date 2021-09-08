@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
 type File struct {
+	size int
 	u *PanUser
 	sKey string
 	Csrf string `json:"csrf"`
@@ -88,7 +90,15 @@ type ChildFile struct {
 	Wpfile string `json:"wpfile"`
 }
 
+var fileInfoList sync.Map
+var verifyList sync.Map
+
 func (u *PanUser) GetFileInfo(url string) (f *File, err error) {
+	r, ok := fileInfoList.Load(url)
+	if ok {
+		f, _ = r.(*File)
+		return
+	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return
@@ -127,10 +137,15 @@ func (u *PanUser) GetFileInfo(url string) (f *File, err error) {
 	if err != nil {
 		return
 	}
+	fileInfoList.Store(url, f)
 	return
 }
 
 func (f *File) Size() (size int, err error) {
+	if f.size > 0 {
+		size = f.size
+		return
+	}
 	var getListSize func(fs []FileInfo) (size int, err error)
 	getListSize = func(fs []FileInfo) (size int, err error) {
 		for _, info := range fs {
@@ -173,11 +188,16 @@ func (f *File) Size() (size int, err error) {
 		}
 		size += file.Size
 	}
+	f.size = size
 	return
 }
 
 func (f *File) Verify(url, pass string) (err error) {
 	if pass == "" {
+		return
+	}
+	_, ok := verifyList.Load(url+pass)
+	if ok {
 		return
 	}
 
@@ -256,6 +276,7 @@ func (f *File) Verify(url, pass string) (err error) {
 	f.FileList = f1.FileList
 	f.Shareid = f1.Shareid
 	f.Bdstoken = f1.Bdstoken
+	verifyList.Store(url+pass, struct {}{})
 	return
 }
 
