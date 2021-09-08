@@ -130,6 +130,52 @@ func (u *PanUser) GetFileInfo(url string) (f *File, err error) {
 	return
 }
 
+func (f *File) Size() (size int, err error) {
+	var getListSize func(fs []FileInfo) (size int, err error)
+	getListSize = func(fs []FileInfo) (size int, err error) {
+		for _, info := range fs {
+			if info.Isdir == 1 {
+				if info.DirEmpty == 1 {
+					continue
+				}
+				fsTemp, err1 := f.list(info.Path)
+				if err1 != nil {
+					err = err1
+					return
+				}
+				sizeTemp, err2 := getListSize(fsTemp)
+				if err2 != nil {
+					err = err2
+					return
+				}
+				size += sizeTemp
+				continue
+			}
+			size += info.Size
+		}
+		return
+	}
+
+	for _, file := range f.FileList {
+		if file.Isdir == 1 {
+			fs, err3 := f.list(file.Path)
+			if err3 != nil {
+				err = err3
+				return
+			}
+			sizeTemp, err4 := getListSize(fs)
+			if err4 != nil {
+				err = err4
+				return
+			}
+			size += sizeTemp
+			continue
+		}
+		size += file.Size
+	}
+	return
+}
+
 func (f *File) Verify(url, pass string) (err error) {
 	if pass == "" {
 		return
@@ -210,6 +256,28 @@ func (f *File) Verify(url, pass string) (err error) {
 	f.FileList = f1.FileList
 	f.Shareid = f1.Shareid
 	f.Bdstoken = f1.Bdstoken
+	return
+}
+
+func (u *PanUser) Size(url, pass string) (size int, err error) {
+	f, err := u.GetFileInfo(url)
+	if err != nil {
+		return
+	}
+
+	if pass == "" && len(f.FileList) == 0 {
+		err = errors.New("该文件需要提取码，请指定提取码")
+		return
+	}
+	err = f.Verify(url, pass)
+	if err != nil {
+		return
+	}
+
+	size, err = f.Size()
+	if err != nil {
+		return
+	}
 	return
 }
 

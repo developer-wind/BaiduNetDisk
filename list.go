@@ -20,32 +20,16 @@ type FileList struct {
 
 type FileListResp struct {
 	Errno int `json:"errno"`
-	GUIDInfo string `json:"guid_info"`
 	List []FileInfo `json:"list"`
-	RequestID int64 `json:"request_id"`
-	GUID int `json:"guid"`
 }
 type FileInfo struct {
-	TkbindID int `json:"tkbind_id"`
 	ServerFilename string `json:"server_filename"`
-	OwnerType int `json:"owner_type"`
-	Category int `json:"category"`
-	RealCategory string `json:"real_category"`
 	Isdir int `json:"isdir"`
 	DirEmpty int `json:"dir_empty"`
 	Path string `json:"path"`
-	Wpfile int `json:"wpfile"`
-	OperID int64 `json:"oper_id"`
-	ServerCtime int `json:"server_ctime"`
 	OwnerID int `json:"owner_id"`
-	LocalMtime int `json:"local_mtime"`
 	Size int `json:"size"`
-	Unlist int `json:"unlist"`
 	Share int `json:"share"`
-	ServerMtime int `json:"server_mtime"`
-	Pl int `json:"pl"`
-	LocalCtime int `json:"local_ctime"`
-	ServerAtime int `json:"server_atime"`
 	Empty int `json:"empty"`
 	FsID int64 `json:"fs_id"`
 }
@@ -133,4 +117,53 @@ func (u *PanUser) GetFileList(path string) (map[string]FileInfo, error) {
 		return nil, err
 	}
 	return fl.List, nil
+}
+
+func (f *File) list(path string) (fs []FileInfo, err error) {
+	var getListFun func(page int) (err error)
+	getListFun = func(page int) (err error) {
+		limit := 1000
+		url := fmt.Sprintf("https://pan.baidu.com/share/list?uk=%s&shareid=%d&order=other&desc=1&showempty=0&web=1&page=%d&num=%d&dir=%s&channel=chunlei&web=1&app_id=&bdstoken=%s&clienttype=0",
+			f.ShareUk,f.Shareid,page,limit,path,f.Bdstoken,
+		)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return
+		}
+		req.Header.Set("Referer", fmt.Sprintf("https://pan.baidu.com/disk/home?#/all?vmode=list"))
+		req.Header.Set("Cookie", f.u.cookie)
+		resp, err := (&http.Client{}).Do(req)
+		if err != nil {
+			return
+		}
+		defer resp.Body.Close()
+		c, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return
+		}
+		flResp := new(FileListResp)
+		err = json.Unmarshal(c, flResp)
+		if err != nil {
+			return
+		}
+		if flResp.Errno != 0 {
+			err = errors.New(fmt.Sprintf("获取分享文件列表失败，错误码：%d", flResp.Errno))
+			return
+		}
+		fs = append(fs, flResp.List...)
+		if len(flResp.List) == limit {
+			page ++
+			err = getListFun(page)
+			if err != nil {
+				return
+			}
+		}
+		return
+	}
+
+	err = getListFun(1)
+	if err != nil {
+		return nil, err
+	}
+	return
 }
