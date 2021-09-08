@@ -211,6 +211,7 @@ func (f *File) Verify(url, pass string) (err error) {
 	return
 }
 
+var InsufficientSpaceError = errors.New("剩余空间不足,无法转存")
 func Transfer(url, path, pass string) error {
 	//获取文件相关参数
 	//需要提取码的文件，部分参数获取不到，需在验证环节获取
@@ -268,6 +269,10 @@ func Transfer(url, path, pass string) error {
 	})
 	err = json.Unmarshal(c, respObj)
 	if err != nil {
+		return err
+	}
+	if respObj.Errno == 12 {
+		err = InsufficientSpaceError
 		return err
 	}
 	if respObj.Errno != 0 {
