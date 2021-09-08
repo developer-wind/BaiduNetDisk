@@ -93,7 +93,7 @@ type ChildFile struct {
 var fileInfoList sync.Map
 var verifyList sync.Map
 
-func (u *PanUser) GetFileInfo(url string) (f *File, err error) {
+func GetFileInfo(url string) (f *File, err error) {
 	r, ok := fileInfoList.Load(url)
 	if ok {
 		f, _ = r.(*File)
@@ -103,7 +103,7 @@ func (u *PanUser) GetFileInfo(url string) (f *File, err error) {
 	if err != nil {
 		return
 	}
-	req.Header.Set("Cookie", u.cookie)
+	//req.Header.Set("Cookie", u.cookie)
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
 		return
@@ -132,7 +132,7 @@ func (u *PanUser) GetFileInfo(url string) (f *File, err error) {
 	}
 
 	f = new(File)
-	f.u = u
+	//f.u = u
 	err = json.Unmarshal(fileMatches[1], f)
 	if err != nil {
 		return
@@ -280,8 +280,8 @@ func (f *File) Verify(url, pass string) (err error) {
 	return
 }
 
-func (u *PanUser) Size(url, pass string) (size int, err error) {
-	f, err := u.GetFileInfo(url)
+func Size(url, pass string) (size int, err error) {
+	f, err := GetFileInfo(url)
 	if err != nil {
 		return
 	}
@@ -306,10 +306,11 @@ var InsufficientSpaceError = errors.New("剩余空间不足,无法转存")
 func (u *PanUser) Transfer(url, path, pass string) error {
 	//获取文件相关参数
 	//需要提取码的文件，部分参数获取不到，需在验证环节获取
-	f, err := u.GetFileInfo(url)
+	f, err := GetFileInfo(url)
 	if err != nil {
 		return err
 	}
+	f.u = u
 
 	if pass == "" && len(f.FileList) == 0 {
 		return errors.New("该文件需要提取码，请指定提取码")

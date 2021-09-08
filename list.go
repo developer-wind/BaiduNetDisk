@@ -131,7 +131,7 @@ func (f *File) list(path string) (fs []FileInfo, err error) {
 			return
 		}
 		req.Header.Set("Referer", fmt.Sprintf("https://pan.baidu.com/disk/home?#/all?vmode=list"))
-		req.Header.Set("Cookie", f.u.cookie)
+		//req.Header.Set("Cookie", f.u.cookie)
 		resp, err := (&http.Client{}).Do(req)
 		if err != nil {
 			return

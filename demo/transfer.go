@@ -13,6 +13,6 @@ func main() {
 
 	panUrl := "https://pan.baidu.com/s/1iv6js7m0m-qaKW6-GlqXRw"
 	pass := "6666"
-	path := "/game/101"
+	path := "/xxx"
 	fmt.Println(pu.Transfer(panUrl, path, pass))
 }
