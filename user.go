@@ -10,6 +10,8 @@ import (
 )
 
 type PanUser struct {
+	username string
+
 	cookie string
 	token  string
 	appid  string
@@ -38,6 +40,28 @@ func ImportCookie(p string) (pu *PanUser, err error) {
 	err = pu.writeCookie(string(c))
 	pu.initCreate()
 	pu.initList()
+	return
+}
+
+func ImportCookies(dir string) (us []*PanUser, err error) {
+	ds, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, d := range ds {
+		if d.IsDir() {
+			usTemp, err1 := ImportCookies(dir + "/" + d.Name())
+			if err1 != nil {
+				return nil, err1
+			}
+			us = append(us, usTemp...)
+		}
+		pu, err2 := ImportCookie(dir + "/" + d.Name())
+		if err2 != nil {
+			return nil, err2
+		}
+		us = append(us, pu)
+	}
 	return
 }
 
@@ -75,12 +99,18 @@ func (u *PanUser) verifyCookie() error {
 	respStruct := new(struct{
 		Token string `json:"bdstoken"`
 		Uk string `json:"uk"`
+		Username string `json:"username"`
 	})
 	err = json.Unmarshal(fileMatches[1], respStruct)
 	if err != nil {
 		return err
 	}
+	u.username = respStruct.Username
 	u.token = respStruct.Token
 	u.uk = respStruct.Uk
 	return nil
+}
+
+func (u *PanUser) Username() string {
+	return u.username
 }
